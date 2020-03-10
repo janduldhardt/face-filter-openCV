@@ -20,13 +20,23 @@ def rect_to_bb(rect):
 	# return a tuple of (x, y, w, h)
 	return (x, y, w, h)
 
+def rescale_frame(frame, percent=75):
+    width = int(frame.shape[1] * percent/ 100)
+    height = int(frame.shape[0] * percent/ 100)
+    dim = (width, height)
+    return cv2.resize(frame, dim, interpolation =cv2.INTER_AREA)
+
+
+# Videocapture settings
 cap = cv2.VideoCapture(0)
 start_frame_number = 50
 cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame_number)
+
 # nose_image = cv2.imread("clown_nose.png")
 nose_image = cv2.imread(args["nose"])
 detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+# predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+predictor = dlib.shape_predictor("nose.dat")
 
 custom_nose = nose_image;
 nose_area = None
@@ -41,16 +51,16 @@ while True:
     for face in faces:
         (x,y,w,h) = rect_to_bb(face)
 
-        cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 3)
+        # cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 3)
 
         # the landmarks see the points in folder picture
         landmarks = predictor(gray, face)
 
         # getting the coordinates of different nose parts
-        top_nose = (int(landmarks.part(29).x), int(landmarks.part(29).y))
-        center_nose = (int(landmarks.part(30).x), int(landmarks.part(30).y))
-        left_nose = (int(landmarks.part(31).x), int(landmarks.part(31).y))
-        right_nose = (int(landmarks.part(35).x), int(landmarks.part(35).y))
+        top_nose = (int(landmarks.part(2).x), int(landmarks.part(2).y))
+        center_nose = (int(landmarks.part(3).x), int(landmarks.part(3).y))
+        left_nose = (int(landmarks.part(4).x), int(landmarks.part(4).y))
+        right_nose = (int(landmarks.part(8).x), int(landmarks.part(8).y))
 
         # calculate new nose width and height
         nose_width = int(hypot(left_nose[0] - right_nose[0], left_nose[1] - right_nose[1]) * 2)
@@ -71,9 +81,9 @@ while True:
                     top_left[0]: top_left[0] + nose_width] = final_nose
 
 
+
+    frame = rescale_frame(frame, 200)
     cv2.imshow("Frame", frame)
-    if nose_area is not None:
-        cv2.imshow("nose", nose_area)
 
     key = cv2.waitKey(1)
     if key == 27:
